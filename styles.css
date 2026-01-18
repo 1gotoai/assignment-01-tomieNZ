@@ -433,16 +433,24 @@ ul {
 .scroll-indicator {
     position: absolute;
     bottom: var(--spacing-xl);
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    width: fit-content;
+    
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: var(--spacing-xs);
+    
     color: var(--gray-500);
     font-size: 0.85rem;
+    text-align: center;
     animation: fadeInUp 1s ease-out 0.8s both;
 }
+
+
 
 .scroll-arrow {
     width: 24px;
@@ -488,10 +496,12 @@ ul {
 }
 
 .title-accent {
-    width: 50px;
+    width: clamp(30px, 8vw, 50px);
+    min-width: 30px;
     height: 3px;
     background: linear-gradient(90deg, var(--primary-dark), var(--primary));
     border-radius: var(--radius-full);
+    flex-shrink: 0;
 }
 
 .section-subtitle {
@@ -1336,6 +1346,32 @@ ul {
     
     .section-title {
         font-size: 1.6rem;
+        flex-wrap: nowrap;
+        gap: var(--spacing-sm);
+    }
+    
+    .title-accent {
+        width: clamp(25px, 6vw, 40px);
+    }
+    
+    .scroll-indicator {
+        position: absolute;
+        bottom: var(--spacing-xl);
+        left: 0;
+        right: 0;
+        margin-left: auto;
+        margin-right: auto;
+        width: fit-content;
+        
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: var(--spacing-xs);
+        
+        color: var(--gray-500);
+        font-size: 0.85rem;
+        text-align: center;
+        animation: fadeInUp 1s ease-out 0.8s both;
     }
     
     .avatar-container {
@@ -1441,6 +1477,20 @@ ul {
     .avatar-container {
         width: 110px;
         height: 110px;
+    }
+    
+    .section-title {
+        font-size: 1.4rem;
+        gap: var(--spacing-xs);
+    }
+    
+    .title-accent {
+        width: clamp(20px, 5vw, 35px);
+    }
+    
+    .scroll-indicator {
+        max-width: 150px;
+        font-size: 0.75rem;
     }
 }
 
