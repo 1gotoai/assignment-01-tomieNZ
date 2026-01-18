@@ -1,0 +1,56 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+# 关键：给 GITHUB_TOKEN 足够的权限
+permissions:
+  contents: read
+  pages: write      # 允许部署到 Pages
+  id-token: write   # 允许 OIDC 认证
+
+# 确保同一时间只有一个部署在运行
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Job 1: 构建网站
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (如果需要)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies (如果需要)
+        run: npm install
+
+      - name: Build
+        run: npm run build  # 或者你的构建命令
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'  # 你的构建输出目录
+
+  # Job 2: 部署到 GitHub Pages
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    
+    # 配置 Pages 环境
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
