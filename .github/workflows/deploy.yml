@@ -15,29 +15,38 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # 新增：自动启用 Pages
   enable-pages:
     runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
     steps:
       - name: Enable GitHub Pages
-        continue-on-error: true  # 如果已启用，忽略错误
+        continue-on-error: true
         run: |
-          curl -L \
+          response=$(curl -s -w "\n%{http_code}" -L \
             -X POST \
             -H "Accept: application/vnd.github+json" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Authorization: Bearer ${{ secrets.PAGES_TOKEN }}" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
             https://api.github.com/repos/${{ github.repository }}/pages \
-            -d '{"build_type":"workflow"}'
+            -d '{"build_type":"workflow"}')
           
-          echo "Waiting for Pages to be enabled..."
-          sleep 5
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+          
+          if [ "$http_code" = "201" ]; then
+            echo "✅ Pages enabled successfully!"
+          elif [ "$http_code" = "409" ]; then
+            echo "✅ Pages already enabled."
+          else
+            echo "⚠️ Unexpected response, but continuing..."
+          fi
+          
+          sleep 10
 
   build:
-    needs: enable-pages  # 新增：依赖 enable-pages
+    needs: enable-pages
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -72,7 +81,6 @@ jobs:
           else
             echo "path=." >> $GITHUB_OUTPUT
           fi
-          echo "Output path: ${{ steps.prepare.outputs.path }}"
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
