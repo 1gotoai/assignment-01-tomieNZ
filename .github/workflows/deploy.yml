@@ -17,6 +17,10 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -26,17 +30,14 @@ jobs:
         with:
           node-version: '20'
 
-      # 尝试安装依赖，如果失败则继续（纯静态项目）
       - name: Install dependencies
         run: npm ci || echo "No package.json or npm dependencies needed"
         continue-on-error: true
 
-      # 尝试构建，如果失败则继续（纯静态项目）
       - name: Build
         run: npm run build || echo "No build script needed"
         continue-on-error: true
 
-      # 智能确定输出目录
       - name: Prepare output directory
         id: prepare
         run: |
@@ -59,6 +60,10 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
