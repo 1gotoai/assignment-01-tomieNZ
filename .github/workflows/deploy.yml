@@ -5,51 +5,98 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-# 关键：给 GITHUB_TOKEN 足够的权限
 permissions:
   contents: read
-  pages: write      # 允许部署到 Pages
-  id-token: write   # 允许 OIDC 认证
+  pages: write
+  id-token: write
 
-# 确保同一时间只有一个部署在运行
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Job 1: 构建网站
-  build:
+  enable-pages:
     runs-on: ubuntu-latest
+    steps:
+      - name: Enable GitHub Pages
+        continue-on-error: true
+        run: |
+          response=$(curl -s -w "\n%{http_code}" -L \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${{ secrets.PAGES_TOKEN }}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            https://api.github.com/repos/${{ github.repository }}/pages \
+            -d '{"build_type":"workflow"}')
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | sed '$d')
+          
+          echo "HTTP Status: $http_code"
+          echo "Response: $body"
+          
+          if [ "$http_code" = "201" ]; then
+            echo "✅ Pages enabled successfully!"
+          elif [ "$http_code" = "409" ]; then
+            echo "✅ Pages already enabled."
+          else
+            echo "⚠️ Unexpected response, but continuing..."
+          fi
+          
+          sleep 10
+
+  build:
+    needs: enable-pages
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js (如果需要)
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install dependencies (如果需要)
-        run: npm install
+      - name: Install dependencies
+        run: npm ci || echo "No package.json or npm dependencies needed"
+        continue-on-error: true
 
       - name: Build
-        run: npm run build  # 或者你的构建命令
+        run: npm run build || echo "No build script needed"
+        continue-on-error: true
+
+      - name: Prepare output directory
+        id: prepare
+        run: |
+          if [ -d "dist" ]; then
+            echo "path=./dist" >> $GITHUB_OUTPUT
+          elif [ -d "build" ]; then
+            echo "path=./build" >> $GITHUB_OUTPUT
+          elif [ -d "out" ]; then
+            echo "path=./out" >> $GITHUB_OUTPUT
+          else
+            echo "path=." >> $GITHUB_OUTPUT
+          fi
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'  # 你的构建输出目录
+          path: ${{ steps.prepare.outputs.path }}
 
-  # Job 2: 部署到 GitHub Pages
   deploy:
     needs: build
     runs-on: ubuntu-latest
-    
-    # 配置 Pages 环境
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
