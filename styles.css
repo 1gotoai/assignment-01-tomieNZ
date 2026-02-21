@@ -427,23 +427,24 @@ ul {
 .btn-download-resume {
     display: inline-flex;
     align-items: center;
-    gap: var(--spacing-xs);
-    margin-top: var(--spacing-md);
-    padding: 0.7rem 1.8rem;
+    gap: 6px;
+    margin-top: var(--spacing-sm);
+    padding: 0.45rem 1.3rem;
     background: linear-gradient(135deg, var(--primary-dark), var(--accent));
     color: var(--white);
     border-radius: var(--radius-full);
-    font-size: 0.95rem;
+    font-size: 0.82rem;
     font-weight: 600;
     font-family: var(--font-body);
     text-decoration: none;
+    letter-spacing: 0.02em;
     transition: var(--transition-bounce);
     animation: fadeInUp 1s ease-out 0.8s both;
 }
 
 .btn-download-resume svg {
-    width: 18px;
-    height: 18px;
+    width: 14px;
+    height: 14px;
 }
 
 .btn-download-resume:hover {
